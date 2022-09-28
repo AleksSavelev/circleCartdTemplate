@@ -32,40 +32,74 @@ import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructor
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.IVisual;
 import DataView = powerbi.DataView;
+import IVisualHost = powerbi.extensibility.IVisualHost;
+
+import * as d3 from "d3";
+type Selection<T extends d3.BaseType> = d3.Selection<T, any, any, any>;
 
 import { VisualSettings } from "./settings";
-export class Visual implements IVisual {
-    private target: HTMLElement;
-    private updateCount: number;
-    private textNode: Text;
 
-    private settings: VisualSettings;
+export class Visual implements IVisual {
+    private host: IVisualHost;
+    private svg: Selection<SVGElement>;
+    private container: Selection<SVGElement>;
+    private circle: Selection<SVGElement>;
+    private textValue: Selection<SVGElement>;
+    private textLabel: Selection<SVGElement>;
+
+    private visualSettings: VisualSettings;
     private formattingSettingsService: FormattingSettingsService;
 
     constructor(options: VisualConstructorOptions) {
-        this.settings = new VisualSettings()
-        this.formattingSettingsService = new FormattingSettingsService();
-
-        console.log('Visual constructor', options);
-        this.target = options.element;
-        this.updateCount = 0;
-        if (document) {
-            const new_p: HTMLElement = document.createElement("p");
-            new_p.appendChild(document.createTextNode("Update count:"));
-            const new_em: HTMLElement = document.createElement("em");
-            this.textNode = document.createTextNode(this.updateCount.toString());
-            new_em.appendChild(this.textNode);
-            new_p.appendChild(new_em);
-            this.target.appendChild(new_p);
-        }
+        this.svg = d3.select(options.element)
+            .append('svg')
+            .classed('circleCard', true);
+        this.container = this.svg.append("g")
+            .classed('container', true);
+        this.circle = this.container.append("circle")
+            .classed('circle', true);
+        this.textValue = this.container.append("text")
+            .classed("textValue", true);
+        this.textLabel = this.container.append("text")
+            .classed("textLabel", true);
     }
 
     public update(options: VisualUpdateOptions) {
-        this.settings = this.formattingSettingsService.populateFormattingSettingsModel(VisualSettings, options.dataViews);
-        console.log('Visual update', options);
-        if (this.textNode) {
-            this.textNode.textContent = (this.updateCount++).toString();
-        }
+        let dataView: DataView = options.dataViews[0];
+
+        this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(VisualSettings, options.dataViews);
+        this.visualSettings.circle.circleThickness.value = Math.max(0, this.visualSettings.circle.circleThickness.value);
+        this.visualSettings.circle.circleThickness.value = Math.min(10, this.visualSettings.circle.circleThickness.value);
+
+        let width: number = options.viewport.width;
+        let height: number = options.viewport.height;
+        this.svg.attr("width", width);
+        this.svg.attr("height", height);
+        let radius: number = Math.min(width, height) / 2.2;
+        this.circle
+            .style("fill", "white")
+            .style("fill-opacity", 0.5)
+            .style("stroke", "black")
+            .style("stroke-width", 2)
+            .attr("r", radius)
+            .attr("cx", width / 2)
+            .attr("cy", height / 2);
+        let fontSizeValue: number = Math.min(width, height) / 5;
+        this.textValue
+            .text(<string>dataView.single.value)
+            .attr("x", "50%")
+            .attr("y", "50%")
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "middle")
+            .style("font-size", fontSizeValue + "px");
+        let fontSizeLabel: number = fontSizeValue / 4;
+        this.textLabel
+            .text(dataView.metadata.columns[0].displayName)
+            .attr("x", "50%")
+            .attr("y", height / 2)
+            .attr("dy", fontSizeValue / 1.2)
+            .attr("text-anchor", "middle")
+            .style("font-size", fontSizeLabel + "px");
     }
 
     /**
@@ -74,6 +108,6 @@ export class Visual implements IVisual {
      *
      */
     public getFormattingModel(): powerbi.visuals.FormattingModel {
-        return this.formattingSettingsService.buildFormattingModel(this.settings);
+        return this.formattingSettingsService.buildFormattingModel(this.visualSettings);
     }
 }
