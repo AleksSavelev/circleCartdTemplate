@@ -51,6 +51,9 @@ export class Visual implements IVisual {
     private formattingSettingsService: FormattingSettingsService;
 
     constructor(options: VisualConstructorOptions) {
+        this.visualSettings = new VisualSettings()
+        this.formattingSettingsService = new FormattingSettingsService();
+
         this.svg = d3.select(options.element)
             .append('svg')
             .classed('circleCard', true);
