@@ -27,61 +27,28 @@
 "use strict";
 
 import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
-import powerbi from "powerbi-visuals-api";
 
 import FormattingSettingsCard = formattingSettings.Card;
 import FormattingSettingsSlice = formattingSettings.Slice;
 import FormattingSettingsModel = formattingSettings.Model;
 
-export class VisualSettings extends FormattingSettingsModel {
-	public dataPoint: dataPointSettings = new dataPointSettings();
-	public cards = [this.dataPoint]
+export class CircleSettings extends FormattingSettingsCard{
+    public circleColor = new formattingSettings.ColorPicker({
+		name: "circleColor",
+		displayName: "Color",
+		value: {value: "white"}
+	});
+    public circleThickness = new formattingSettings.NumUpDown({
+		name: "circleThickness",
+		displayName: "Thickness",
+		value: 2, 
+	});
+	name: string = "circle";
+    displayName: string = "Circle";
+    slices: Array<FormattingSettingsSlice> = [this.circleColor, this.circleThickness];
 }
 
-export class dataPointSettings extends FormattingSettingsCard {
-	// Default color
-	public defaultColor = new formattingSettings.ColorPicker({
-		name: "defaultColor",
-		displayName: "Default Color",
-		value: {value: ""}
-	});
-	// Show all
-	public showAllDataPoints = new formattingSettings.ToggleSwitch({
-		name: "showAllDataPoints",
-		displayName: "Show all",
-		value: true
-	});
-	// Fill
-	public fill = new formattingSettings.ColorPicker({
-		name: "fill",
-		displayName: "Fill",
-		value: {value: ""}
-	});
-	// Color saturation
-	public fillRule = new formattingSettings.Slider({
-		name: "fillRule",
-		displayName: "Color saturation",
-		value: 0,
-		options: {
-			minValue: {
-                type: powerbi.visuals.ValidatorType.Min,
-                value: 0,
-            },
-            maxValue: {
-                type: powerbi.visuals.ValidatorType.Max,
-                value: 100,
-            }
-		}
-	});
-	// Text Size
-	public fontSize = new formattingSettings.NumUpDown({
-		name: "fontSize",
-		displayName: "Text Size",
-		value: 12, 
-	})
-
-	name: string = "dataPoint";
-    displayName: string = "Data colors";
-    slices: Array<FormattingSettingsSlice> = [this.defaultColor, this.showAllDataPoints, this.fill, this.fillRule, this.fontSize];
-  }
-
+export class VisualSettings extends FormattingSettingsModel {
+    public circle: CircleSettings = new CircleSettings();
+	public cards: FormattingSettingsCard[] = [this.circle]
+}

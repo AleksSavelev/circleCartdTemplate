@@ -27,52 +27,63 @@
 
 import "./../style/visual.less";
 import powerbi from "powerbi-visuals-api";
+import { VisualSettings } from "./settings";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.IVisual;
 import DataView = powerbi.DataView;
+import IViewport = powerbi.IViewport;
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import { ReactCircleCard, initialState } from "./component";
 
-import { VisualSettings } from "./settings";
+
 export class Visual implements IVisual {
     private target: HTMLElement;
-    private updateCount: number;
-    private textNode: Text;
+    private reactRoot: React.ComponentElement<any, any>;
+    private viewport: IViewport;
 
     private settings: VisualSettings;
     private formattingSettingsService: FormattingSettingsService;
 
     constructor(options: VisualConstructorOptions) {
-        this.settings = new VisualSettings()
+        this.reactRoot = React.createElement(ReactCircleCard, {});
+        this.target = options.element;
+
+        this.settings = new VisualSettings;
         this.formattingSettingsService = new FormattingSettingsService();
 
-        console.log('Visual constructor', options);
-        this.target = options.element;
-        this.updateCount = 0;
-        if (document) {
-            const new_p: HTMLElement = document.createElement("p");
-            new_p.appendChild(document.createTextNode("Update count:"));
-            const new_em: HTMLElement = document.createElement("em");
-            this.textNode = document.createTextNode(this.updateCount.toString());
-            new_em.appendChild(this.textNode);
-            new_p.appendChild(new_em);
-            this.target.appendChild(new_p);
-        }
+        ReactDOM.render(this.reactRoot, this.target);
     }
 
     public update(options: VisualUpdateOptions) {
-        this.settings = this.formattingSettingsService.populateFormattingSettingsModel(VisualSettings, options.dataViews);
-        console.log('Visual update', options);
-        if (this.textNode) {
-            this.textNode.textContent = (this.updateCount++).toString();
+        this.viewport = options.viewport;
+        const { width, height } = this.viewport;
+        const size = Math.min(width, height);
+
+        this.settings = this.formattingSettingsService.populateFormattingSettingsModel(VisualSettings, options.dataViews)
+        const object = this.settings.circle;
+
+        if(options.dataViews && options.dataViews[0]){
+            const dataView: DataView = options.dataViews[0];
+        
+            ReactCircleCard.update({
+                size,
+                borderWidth: object?.circleThickness.value ?? undefined,
+                background: object?.circleColor.value.value ?? undefined,
+                textLabel: dataView.metadata.columns[0].displayName,
+                textValue: dataView.single.value.toString(),
+            });
+        } else {
+            this.clear();
         }
     }
 
-    /**
-     * This function gets called on every formatting pane render. It allows you to select which of the
-     * objects and properties you want to expose to the users in the property pane.
-     *
-     */
+    private clear() {
+        ReactCircleCard.update(initialState);
+    }
+
     public getFormattingModel(): powerbi.visuals.FormattingModel {
         return this.formattingSettingsService.buildFormattingModel(this.settings);
     }
