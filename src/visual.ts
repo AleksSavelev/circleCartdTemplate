@@ -30,7 +30,7 @@ import powerbi from "powerbi-visuals-api";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
-import IVisual = powerbi.extensibility.IVisual;
+import IVisual = powerbi.extensibility.visual.IVisual;
 import DataView = powerbi.DataView;
 
 import { VisualSettings } from "./settings";
